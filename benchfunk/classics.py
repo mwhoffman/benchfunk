@@ -9,6 +9,7 @@ from __future__ import print_function
 
 import numpy as np
 import mwhutils.random as random
+import mwhutils.pretty as pretty
 
 __all__ = ['Sinusoidal', 'Gramacy', 'Branin', 'Bohachevsky', 'Goldstein']
 
@@ -20,24 +21,38 @@ class GOModel(object):
     should be amenable to _minimization_, but calls to `get_data` will return
     the negative of `f` so we can maximize the function.
     """
-    def __init__(self, sigma=0.0, rng=None):
-        self._sigma = sigma
+    def __init__(self, sn2=0.0, rng=None, minimize=False):
+        self._sigma = np.sqrt(sn2)
         self._rng = random.rstate(rng)
+        self._minimize = minimize
+
+    def __repr__(self):
+        args = []
+        kwargs = {}
+        if self._sigma > 0:
+            args.append(self._sigma**2)
+        if self._minimize:
+            kwargs['minimize'] = True
+        return pretty.repr_args(self, *args, **kwargs)
 
     def __call__(self, x):
         return self.get(x)[0]
 
     def get(self, X):
-        X = np.array(X, ndmin=2, dtype=float)
         y = self.get_f(X)
         if self._sigma > 0:
             y += self._rng.normal(scale=self._sigma, size=len(y))
         return y
 
     def get_f(self, X):
-        # NOTE: the functions defined in this package are for MINIMIZATION
-        # problems, hence we have to negate them.
-        return -self._f(np.array(X, ndmin=2, copy=False))
+        X = np.array(X, ndmin=2, dtype=float, copy=False)
+        if X.shape != (X.shape[0], self.bounds.shape[0]):
+            raise ValueError('function inputs must be {:d}-dimensional'
+                             .format(self.ndim))
+        f = self._f(X)
+        if self._minimize:
+            f *= -1
+        return f
 
 
 def _cleanup(cls):
@@ -45,8 +60,12 @@ def _cleanup(cls):
     Decorator to make sure the bounds/xmax properties are correctly sized.
     """
     cls.bounds = np.array(cls.bounds, ndmin=2, dtype=float)
-    cls.xmax = np.array(cls.xmax, ndmin=1, dtype=float)
-    cls.fmax = -cls._f(cls.xmax[None, :])[0]
+    cls.xopt = np.array(cls.xopt, ndmin=1, dtype=float)
+    cls.ndim = cls.bounds.shape[0]
+    assert cls.bounds.ndim == 2
+    assert cls.xopt.ndim == 1
+    assert cls.bounds.shape[1] == 2
+    assert cls.bounds.shape[0] == cls.xopt.shape[0]
     return cls
 
 
@@ -59,8 +78,8 @@ class Sinusoidal(GOModel):
     """
     Simple sinusoidal function bounded in [0, 2pi] given by cos(x)+sin(3x).
     """
-    bounds = [[0, 2*np.pi]]
-    xmax = 3.61439678
+    bounds = [0, 2*np.pi]
+    xopt = 3.61439678
 
     @staticmethod
     def _f(x):
@@ -74,7 +93,7 @@ class Gramacy(GOModel):
     in modeling computer experiments".
     """
     bounds = [[0.5, 2.5]]
-    xmax = 0.54856343
+    xopt = 0.54856343
 
     @staticmethod
     def _f(x):
@@ -89,7 +108,7 @@ class Branin(GOModel):
     optimizers.
     """
     bounds = [[-5, 10], [0, 15]]
-    xmax = [np.pi, 2.275]
+    xopt = [np.pi, 2.275]
 
     @staticmethod
     def _f(x):
@@ -107,7 +126,7 @@ class Bohachevsky(GOModel):
     There is only one global optimizer at [0, 0].
     """
     bounds = [[-100, 100], [-100, 100]]
-    xmax = [0, 0]
+    xopt = [0, 0]
 
     @staticmethod
     def _f(x):
@@ -124,7 +143,7 @@ class Goldstein(GOModel):
     are several local optimizers and a single global optimizer at [0,-1].
     """
     bounds = [[-2, 2], [-2, 2]]
-    xmax = [0, -1]
+    xopt = [0, -1]
 
     @staticmethod
     def _f(x):
