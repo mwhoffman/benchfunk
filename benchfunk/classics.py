@@ -14,23 +14,24 @@ import mwhutils.pretty as pretty
 __all__ = ['Sinusoidal', 'Gramacy', 'Branin', 'Bohachevsky', 'Goldstein']
 
 
-class GOModel(object):
+class GlobalOptFunc(object):
     """
-    Base class for "global optimization" models. Every subclass should
-    implement a static method `f` which evaluates the function. Note that `f`
-    should be amenable to _minimization_, but calls to `get_data` will return
-    the negative of `f` so we can maximize the function.
+    Base class for benchmark functions from the global optimization literature.
+    Implementations of this method should include a static function _f which
+    evaluates an (n,d)-array of input locations and returns the evaluation of
+    each input. Note that these functions are assumed to correspond to
+    *minimization* problems.
     """
     def __init__(self, sn2=0.0, rng=None, minimize=False):
-        self._sigma = np.sqrt(sn2)
+        self._sn2 = float(sn2)
         self._rng = random.rstate(rng)
         self._minimize = minimize
 
     def __repr__(self):
         args = []
         kwargs = {}
-        if self._sigma > 0:
-            args.append(self._sigma**2)
+        if self._sn2 > 0:
+            args.append(self._sn2)
         if self._minimize:
             kwargs['minimize'] = True
         return pretty.repr_args(self, *args, **kwargs)
@@ -39,12 +40,14 @@ class GOModel(object):
         return self.get(x)[0]
 
     def get(self, X):
+        """Vectorized access to the benchmark function."""
         y = self.get_f(X)
-        if self._sigma > 0:
-            y += self._rng.normal(scale=self._sigma, size=len(y))
+        if self._sn2 > 0:
+            y += self._rng.normal(scale=np.sqrt(self._sn2), size=len(y))
         return y
 
     def get_f(self, X):
+        """Vectorized access to the noise-free benchmark function."""
         X = np.array(X, ndmin=2, dtype=float, copy=False)
         if X.shape != (X.shape[0], self.bounds.shape[0]):
             raise ValueError('function inputs must be {:d}-dimensional'
@@ -74,7 +77,7 @@ def _cleanup(cls):
 
 
 @_cleanup
-class Sinusoidal(GOModel):
+class Sinusoidal(GlobalOptFunc):
     """
     Simple sinusoidal function bounded in [0, 2pi] given by cos(x)+sin(3x).
     """
@@ -87,7 +90,7 @@ class Sinusoidal(GOModel):
 
 
 @_cleanup
-class Gramacy(GOModel):
+class Gramacy(GlobalOptFunc):
     """
     Sinusoidal function in 1d used by Gramacy and Lee in "Cases for the nugget
     in modeling computer experiments".
@@ -101,7 +104,7 @@ class Gramacy(GOModel):
 
 
 @_cleanup
-class Branin(GOModel):
+class Branin(GlobalOptFunc):
     """
     The 2d Branin function bounded in [-5,10] to [0,15]. Global optimizers
     exist at [-pi, 12.275], [pi, 2.275], and [9.42478, 2.475] with no local
@@ -120,7 +123,7 @@ class Branin(GOModel):
 
 
 @_cleanup
-class Bohachevsky(GOModel):
+class Bohachevsky(GlobalOptFunc):
     """
     The Bohachevsky function in 2d, bounded in [-100, 100] for both variables.
     There is only one global optimizer at [0, 0].
@@ -137,7 +140,7 @@ class Bohachevsky(GOModel):
 
 
 @_cleanup
-class Goldstein(GOModel):
+class Goldstein(GlobalOptFunc):
     """
     The Goldstein & Price function in 2d, bounded in [-2,-2] to [2,2]. There
     are several local optimizers and a single global optimizer at [0,-1].
