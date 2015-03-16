@@ -50,7 +50,7 @@ class GOModel(object):
             raise ValueError('function inputs must be {:d}-dimensional'
                              .format(self.ndim))
         f = self._f(X)
-        if self._minimize:
+        if not self._minimize:
             f *= -1
         return f
 
