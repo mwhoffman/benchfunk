@@ -12,7 +12,8 @@ import numpy as np
 import mwhutils.random as random
 import mwhutils.pretty as pretty
 
-__all__ = ['Sinusoidal', 'Gramacy', 'Branin', 'Bohachevsky', 'Goldstein']
+__all__ = ['Sinusoidal', 'Gramacy', 'Branin', 'Bohachevsky', 'Goldstein',
+           'Hartmann3', 'Hartmann6']
 
 
 class Benchmark(object):
@@ -135,3 +136,37 @@ class Goldstein(Benchmark):
              (18 - 32*x[:, 0] + 12*x[:, 0]**2 + 48*x[:, 1] - 36*x[:, 0]*x[:, 1]
               + 27*x[:, 1]**2))
         return -a * b
+
+
+class Hartmann3(Benchmark):
+    bounds = np.array(3 * [[0., 1.]])
+    ndim = 3
+
+    def _f(self, x):
+        a = np.array([[3.0, 10., 30.],
+                      [0.1, 10., 35.],
+                      [3.0, 10., 30.],
+                      [0.1, 10., 35.]])[None]
+        c = np.array([1., 1.2, 3., 3.2])[None]
+        p = np.array([[0.36890, 0.11700, 0.26730],
+                      [0.46990, 0.43870, 0.74700],
+                      [0.10910, 0.87320, 0.55470],
+                      [0.03815, 0.57430, 0.88280]])[None]
+        return np.sum(c * np.exp(-np.sum(a * (x[:, None] - p)**2, -1)), -1)
+
+
+class Hartmann6(Benchmark):
+    bounds = np.array(6 * [[0., 1.]])
+    ndim = 6
+
+    def _f(self, x):
+        a = np.array([[10., 3.0, 17., 3.5, 1.7, 8.0],
+                      [.05, 10., 17., 0.1, 8.0, 14.],
+                      [3.0, 3.5, 1.7, 10., 17., 8.0],
+                      [17., 8.0, .05, 10., 0.1, 14.]])[None]
+        c = np.array([1.0, 1.2, 3.0, 3.2])[None]
+        p = np.array([[0.1312, 0.1696, 0.5569, 0.0124, 0.8283, 0.5886],
+                      [0.2329, 0.4135, 0.8307, 0.3736, 0.1004, 0.9991],
+                      [0.2348, 0.1451, 0.3522, 0.2883, 0.3047, 0.6650],
+                      [0.4047, 0.8828, 0.8732, 0.5743, 0.1091, 0.0381]])[None]
+        return np.sum(c * np.exp(-np.sum(a * (x[:, None] - p)**2, -1)), -1)

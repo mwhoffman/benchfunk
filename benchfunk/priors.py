@@ -39,7 +39,7 @@ class PriorFunction(object):
         """Vectorized access to the benchmark function."""
         # FIXME: I don't like this. It requires you to know the internal
         # workings of the model.
-        return self._model._post.like.sample(self.get_f(X))
+        return self._model.like.sample(self.get_f(X))
 
     def get_f(self, X):
         """Vectorized access to the noise-free benchmark function."""
