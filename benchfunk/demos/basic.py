@@ -24,9 +24,9 @@ policies['PI(0.1)'] = (pp.PI, dict(xi=0.1))
 policies['TS(100)'] = (pp.Thompson, dict(n=100))
 
 # run stack of experiments
-results = run_stack(problems, policies, niter, nreps, name)
+results = run_stack(problems, policies, niter, nreps, name=name)
 results.name = name
 
 # plot results
-fig = plot_stack(results, problems.keys(), policies.keys(), name)
+fig = plot_stack(results, problems.keys(), policies.keys(), name=name)
 fig.name = '.'.join([name, 'plot'])
