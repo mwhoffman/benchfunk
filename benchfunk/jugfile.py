@@ -13,7 +13,7 @@ from classics import *
 
 
 @TaskGenerator
-def solve_problem(problem, policy, niter, seed):
+def run_instance(problem, policy, niter, seed):
     func = problem[0](rng=seed, **problem[1])           # instantiate problem
     bounds = func.bounds
     policy, policy_kwargs = policy                      # unpack policy
@@ -42,21 +42,32 @@ def solve_problem(problem, policy, niter, seed):
 
 
 @CompoundTaskGenerator
-def run_experiment(problem, policies, niter, nreps):
-    data = {
-        key: [solve_problem(problem, policy, niter, seed)
-              for seed in xrange(nreps)]
-        for key, policy in policies.items()
-    }
+def run_experiment(problem, policies, niter, nreps, name=''):
+    # data = {
+    #     key: [solve_problem(problem, policy, niter, seed)
+    #           for seed in xrange(nreps)]
+    #     for key, policy in policies.items()
+    # }
+    data = dict()
+    for key, policy in policies.items():
+        data[key] = [run_instance(problem, policy, niter, seed)
+                     for seed in xrange(nreps)]
+        for t in data[key]:
+            t.name = '.'.join([name, key])
     return data
 
 
 @CompoundTaskGenerator
-def run_stack(problems, policies, niter, nreps):
-    data = {
-        key: run_experiment(problem, policies, niter, nreps)
-        for key, problem in problems.items()
-    }
+def run_stack(problems, policies, niter, nreps, name=''):
+    # data = {
+    #     key: run_experiment(problem, policies, niter, nreps)
+    #     for key, problem in problems.items()
+    # }
+    data = dict()
+    for key, problem in problems.items():
+        namekey = '.'.join([name, key])
+        data[key] = run_experiment(problem, policies, niter, nreps, namekey)
+        data[key].name = namekey
     return data
 
 @TaskGenerator
@@ -79,6 +90,8 @@ def plot_stack(stack_results, name=''):
     axs[0].legend(loc=0, fontsize=16)
     plt.savefig(name, bbox_inches='tight')
 
+    return fig
+
 
 ###############################################################################
 # Run the experiments
@@ -86,13 +99,13 @@ def plot_stack(stack_results, name=''):
 
 if True:
     # parameters
-    niter = 50
-    nreps = 20
+    name = __name__
+    niter = 30
+    nreps = 10
 
     problems = {
         'Gramacy(0.01)': (Gramacy, dict(sn2=0.01)),
         'Gramacy(0.05)': (Gramacy, dict(sn2=0.05)),
-        'Gramacy(0.10)': (Gramacy, dict(sn2=0.10)),
     }
 
     policies = {
@@ -101,6 +114,8 @@ if True:
         'TS(100)': (pp.Thompson, dict(n=100)),
     }
 
-    results = run_stack(problems, policies, niter, nreps)
+    results = run_stack(problems, policies, niter, nreps, name)
+    results.name = name
 
-    plot_stack(results, 'foo.pdf')
+    fig = plot_stack(results, 'foo.pdf')
+    fig.name = '.'.join([name, 'plot'])
