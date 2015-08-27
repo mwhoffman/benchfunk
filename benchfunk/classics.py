@@ -9,8 +9,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import numpy as np
-import mwhutils.random as random
-import mwhutils.pretty as pretty
+
+from .utils import rstate, repr_args
 
 __all__ = ['Sinusoidal', 'Gramacy', 'Branin', 'Bohachevsky', 'Goldstein',
            'Hartmann3', 'Hartmann6']
@@ -25,14 +25,14 @@ class Benchmark(object):
     """
     def __init__(self, sn2=0.0, rng=None):
         self._sn2 = float(sn2)
-        self._rng = random.rstate(rng)
+        self._rng = rstate(rng)
 
     def __repr__(self):
         args = []
         kwargs = {}
         if self._sn2 > 0:
             args.append(self._sn2)
-        return pretty.repr_args(self, *args, **kwargs)
+        return repr_args(self, *args, **kwargs)
 
     def __call__(self, x):
         return self.get(x)[0]
@@ -96,7 +96,7 @@ class Branin(Benchmark):
     def _f(self, x):
         y = (x[:, 1]-(5.1/(4*np.pi**2))*x[:, 0]**2+5*x[:, 0]/np.pi-6)**2
         y += 10*(1-1/(8*np.pi))*np.cos(x[:, 0])+10
-        ## NOTE: this rescales branin by 10 to make it more manageable.
+        # NOTE: this rescales branin by 10 to make it more manageable.
         y /= 10.
         return -y
 
@@ -139,8 +139,12 @@ class Goldstein(Benchmark):
 
 
 class Hartmann3(Benchmark):
-    bounds = np.array(3 * [[0., 1.]])
+    """
+    The 3-dimensional Hartmann function bounded in [0,1]^3.
+    """
     ndim = 3
+    bounds = np.array(3 * [[0., 1.]])
+    xopt = np.array([0.114614, 0.555649, 0.852547])
 
     def _f(self, x):
         a = np.array([[3.0, 10., 30.],
@@ -156,8 +160,13 @@ class Hartmann3(Benchmark):
 
 
 class Hartmann6(Benchmark):
-    bounds = np.array(6 * [[0., 1.]])
+    """
+    The 6-dimensional Hartmann function bounded in [0,1]^6.
+    """
     ndim = 6
+    bounds = np.array(6 * [[0., 1.]])
+    xopt = np.array([0.201667, 0.150011, 0.476874,
+                     0.275332, 0.311652, 0.6573])
 
     def _f(self, x):
         a = np.array([[10., 3.0, 17., 3.5, 1.7, 8.0],
@@ -169,4 +178,8 @@ class Hartmann6(Benchmark):
                       [0.2329, 0.4135, 0.8307, 0.3736, 0.1004, 0.9991],
                       [0.2348, 0.1451, 0.3522, 0.2883, 0.3047, 0.6650],
                       [0.4047, 0.8828, 0.8732, 0.5743, 0.1091, 0.0381]])[None]
-        return np.sum(c * np.exp(-np.sum(a * (x[:, None] - p)**2, -1)), -1)
+        F = np.sum(c * np.exp(-np.sum(a * (x[:, None] - p)**2, -1)), -1)
+        # NOTE: this rescales the problem to have mean zero and variance 1, as
+        # used in Picheny et al., 2012.
+        F = (F + 2.58) / 1.94
+        return F

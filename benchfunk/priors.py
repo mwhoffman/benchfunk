@@ -9,20 +9,26 @@ from __future__ import print_function
 
 import numpy as np
 
-from mwhutils import grid
-from mwhutils import random
+from .utils import rstate
 
 
 class PriorFunction(object):
     """
-    Benchmark function which corresponds to a sample from the given prior.
+    Benchmark function which corresponds to a sample from a given generative
+    model. The model should define methods `sample`, `predict`, and `add_data`,
+    which correspond to sampling, predicting, and posterior updating. The
+    prediction step should return marginal mean and a variance estimates.
+    Finally, the model should also define a likelihood via `model.like` which
+    can be sampled from.
     """
     def __init__(self, model, bounds, n, rng=None):
-        rng = random.rstate(rng)
+        rng = rstate(rng)
         bounds = np.array(bounds, ndmin=2, dtype=float)
+        d = len(bounds)
 
         # get new data
-        X = grid.regular(bounds, n)
+        X = np.meshgrid(*(np.linspace(a, b, n) for a, b in bounds))
+        X = np.reshape(X, (d, -1)).T
         Y = model.sample(X, rng=rng)
 
         # store everything
