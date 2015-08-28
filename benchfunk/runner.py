@@ -12,27 +12,17 @@ __all__ = ['run_instance', 'run_experiment', 'run_stack']
 def run_instance(problem, policy, niter, seed):
     func = problem[0](rng=seed, **problem[1])           # instantiate problem
     bounds = func.bounds
-    policy, policy_kwargs = policy                      # unpack policy
 
     model = pybo.init_model(func, bounds)               # initialize model
-    ninit = model.ndata
+    data, model = pybo.solve_bayesopt(func,
+                               bounds,
+                               model,
+                               niter,
+                               init='latin',
+                               policy=policy,
+                               recommender='incumbent')
 
-
-    R = [pybo.recommenders.best_latent(model, bounds)]  # get recommendation
-
-    for _ in xrange(ninit, niter):
-        index = policy(model, bounds, **policy_kwargs)
-        xnext, _ = pybo.solvers.solve_lbfgs(index, bounds)
-
-        model.add_data(xnext, func(xnext))
-        R.append(pybo.recommenders.best_latent(model, bounds))
-
-    data = np.zeros(niter - ninit + 1,
-                    [('R', np.float, (len(bounds),)),
-                     ('F', np.float)])
-
-    data['R'] = R
-    data['F'] = func.get_f(data['R'])
+    data['F'] = func.get_f(data['xbest'])
 
     return data
 
