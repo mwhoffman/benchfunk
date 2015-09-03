@@ -22,13 +22,13 @@ function.
 """
 
 from .functions import *
-from .priors import *
+from .core import *
 
 from .functions import classics
 from .functions import custom
+from .functions import priors
 from .core import runners
 from .core import plotters
-from . import priors
 
 __all__ = []
 __all__ += classics.__all__
