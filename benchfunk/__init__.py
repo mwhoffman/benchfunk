@@ -22,14 +22,12 @@ function.
 """
 
 from .functions import classics
-from .functions import interactive
-from .functions import subprocess
+from .functions import custom
 from .core import runners
 from .core import plotters
 
 __all__ = []
 __all__ += classics.__all__
-__all__ += interactive.__all__
-__all__ += subprocess.__all__
+__all__ += custom.__all__
 __all__ += runners.__all__
 __all__ += plotters.__all__
