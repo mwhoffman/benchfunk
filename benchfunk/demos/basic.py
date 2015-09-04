@@ -1,9 +1,8 @@
 from collections import OrderedDict
 import pybo.policies as pp
 
-from benchfunk.classics import *
-from benchfunk.runner import run_stack
-from benchfunk.plotter import plot_stack
+from benchfunk.functions import *
+from benchfunk.core import run_stack, plot_stack
 
 
 # parameters

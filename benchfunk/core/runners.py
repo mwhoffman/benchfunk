@@ -1,7 +1,5 @@
 from jug import TaskGenerator
 from jug.compound import CompoundTaskGenerator
-
-import numpy as np
 import pybo
 
 
@@ -18,7 +16,6 @@ def run_instance(problem, policy, niter, seed):
                                bounds,
                                model,
                                niter,
-                               init='latin',
                                policy=policy,
                                recommender='incumbent')
 
