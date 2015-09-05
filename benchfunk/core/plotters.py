@@ -22,9 +22,9 @@ def plot_stack(stack_results, problems=None, policies=None, name=''):
             v = results[policy]
             # TODO: Fix this mess. Due to having a list of structured arrays.
             nreps = len(v)
-            mean = v[0]['F']
+            mean = v[0][1]
             for i in xrange(1, nreps):
-                mean += v[i]['F']
+                mean += v[i][1]
             mean /= nreps
 
             ax.plot(mean, label=policy)

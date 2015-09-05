@@ -12,16 +12,16 @@ def run_instance(problem, policy, niter, seed):
     bounds = func.bounds
 
     model = pybo.init_model(func, bounds)               # initialize model
-    data, model = pybo.solve_bayesopt(func,
-                               bounds,
-                               model,
-                               niter,
-                               policy=policy,
-                               recommender='incumbent')
+    xbest, model = pybo.solve_bayesopt(func,
+                                       bounds,
+                                       model,
+                                       niter,
+                                       policy=policy,
+                                       recommender='incumbent')
 
-    data['F'] = func.get_f(data['xbest'])
+    ybest = func.get_f(xbest)
 
-    return data
+    return xbest, ybest
 
 
 @CompoundTaskGenerator
