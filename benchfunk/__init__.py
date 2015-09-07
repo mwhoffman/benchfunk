@@ -21,11 +21,17 @@ vectorized access. Also available is `f.get_f(X)` for access to the noise-free
 function.
 """
 
-from .classics import *
-from .priors import *
+from .functions import *
+from .core import *
 
-from . import classics
-from . import priors
+from .functions import classics
+from .functions import custom
+from .functions import priors
+from .core import runners
+from .core import plotters
 
 __all__ = []
 __all__ += classics.__all__
+__all__ += custom.__all__
+__all__ += runners.__all__
+__all__ += plotters.__all__

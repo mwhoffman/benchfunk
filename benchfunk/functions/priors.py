@@ -9,7 +9,10 @@ from __future__ import print_function
 
 import numpy as np
 
-from .utils import rstate
+from ..utils import rstate
+
+
+__all__ = ['PriorFunction']
 
 
 class PriorFunction(object):

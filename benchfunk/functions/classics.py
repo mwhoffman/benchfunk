@@ -10,7 +10,7 @@ from __future__ import print_function
 
 import numpy as np
 
-from .utils import rstate, repr_args
+from ..utils import rstate, repr_args
 
 __all__ = ['Sinusoidal', 'Gramacy', 'Branin', 'Bohachevsky', 'Goldstein',
            'Hartmann3', 'Hartmann6']
