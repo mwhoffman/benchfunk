@@ -1,0 +1,6 @@
+numpy
+jug
+nose
+git+https://github.com/mwhoffman/reggie.git#egg=reggie
+git+https://github.com/mwhoffman/pybo.git#egg=pybo
+git+https://github.com/mwhoffman/ezplot.git#egg=ezplot
