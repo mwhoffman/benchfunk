@@ -1,19 +1,27 @@
+"""
+Plotting functions for a stack of experiments.
+"""
+
 import matplotlib
 matplotlib.use('Agg')
-import numpy as np
-from jug import TaskGenerator
-import ezplot
 
+import numpy as np
+
+from ezplot import figure
+from jug import TaskGenerator
 
 __all__ = ['plot_stack']
 
 
 @TaskGenerator
 def plot_stack(stack_results, problems=None, policies=None, name=''):
+    """
+    Plot a single stack of experiments.
+    """
     problems = problems if problems is not None else stack_results.key()
     nfigs = len(problems)
 
-    fig = ezplot.figure(figsize=(5*nfigs, 4))
+    fig = figure(figsize=(5*nfigs, 4))
 
     for i, expt in enumerate(problems):
         results = stack_results[expt]
@@ -22,17 +30,16 @@ def plot_stack(stack_results, problems=None, policies=None, name=''):
         ax = fig.add_subplot(1, nfigs, i+1)
 
         for policy in policies:
-            xbest, ybest = zip(*results[policy])
-            iters = np.arange(np.shape(ybest)[1])
+            _, fbest = zip(*results[policy])
+            iters = np.arange(np.shape(fbest)[1])
 
-            mu = np.mean(ybest, axis=0)
-            std = np.std(ybest, axis=0) / np.sqrt(len(ybest))
+            mu = np.mean(fbest, axis=0)
+            std = np.std(fbest, axis=0) / np.sqrt(len(fbest))
             ax.plot_banded(iters, mu, std, label=policy)
 
         ax.set_title(expt, fontsize=16)
 
     ax.legend(loc=0, fontsize=16)
-    ezplot.plt.savefig(name)
+    fig.savefig(name)
 
     return fig
-

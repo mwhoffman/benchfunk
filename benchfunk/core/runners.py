@@ -1,31 +1,39 @@
+"""
+Methods used to construct a jugfile for running benchmarks.
+"""
+
 from jug import TaskGenerator
 from jug.compound import CompoundTaskGenerator
-import pybo
 
+from pybo import solve_bayesopt
 
 __all__ = ['run_instance', 'run_experiment', 'run_stack']
 
 
 @TaskGenerator
 def run_instance(problem, policy, niter, seed):
-    func = problem[0](rng=seed, **problem[1])           # instantiate problem
+    """
+    Default runner for a single instance (ie problem/policy pair).
+    """
+    # instantiate a problem and its bounds
+    func = problem[0](rng=seed, **problem[1])
     bounds = func.bounds
 
-    model = pybo.init_model(func, bounds)               # initialize model
-    xbest, model = pybo.solve_bayesopt(func,
-                                       bounds,
-                                       model,
-                                       niter,
-                                       policy=policy,
-                                       recommender='incumbent')
+    _, _, info = solve_bayesopt(func, bounds,
+                                niter=niter, policy=policy,
+                                recommender='incumbent')
 
-    ybest = func.get_f(xbest)
+    xbest = info.xbest
+    fbest = func.get_f(xbest)
 
-    return xbest, ybest
+    return xbest, fbest
 
 
 @CompoundTaskGenerator
 def run_experiment(problem, policies, niter, nreps, script=None, name=''):
+    """
+    Default runner for a single experiment.
+    """
     data = dict()
     script = run_instance if script is None else script
 
@@ -43,20 +51,14 @@ def run_experiment(problem, policies, niter, nreps, script=None, name=''):
 
 @CompoundTaskGenerator
 def run_stack(problems, policies, niter, nreps, script=None, name=''):
+    """
+    Run a stack of problem instances.
+    """
     data = dict()
-    script = run_instance if script is None else script
-
     for key, problem in problems.items():
         namekey = '.'.join([name, key])
-
-        data[key] = run_experiment(
-            problem,
-            policies,
-            niter,
-            nreps,
-            script=script,
-            name=namekey)
-
+        data[key] = run_experiment(problem, policies, niter, nreps, script,
+                                   namekey)
         data[key].name = namekey
 
     return data
