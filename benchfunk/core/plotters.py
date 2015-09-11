@@ -24,7 +24,7 @@ def plot_stack(stack_results, problems=None, policies=None, name=''):
             iters = np.arange(np.shape(ybest)[1])
 
             mu = np.mean(ybest, axis=0)
-            std = np.std(ybest, axis=0)
+            std = np.std(ybest, axis=0) / np.sqrt(len(ybest))
             ax.plot_banded(iters, mu, std, label=policy)
 
         ax.set_title(expt, fontsize=16)
