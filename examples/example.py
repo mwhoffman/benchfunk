@@ -1,9 +1,13 @@
-from collections import OrderedDict
-import pybo.policies as pp
+"""
+Example script which runs a number of policies on a single problem with varying
+levels of observation noise.
+"""
 
-from benchfunk.functions import *
+from collections import OrderedDict
 from benchfunk.core import run_stack, plot_stack
 
+from pybo.policies import *
+from benchfunk.functions import *
 
 # parameters
 name = __name__
@@ -18,9 +22,9 @@ problems['Gramacy(0.10)'] = (Gramacy, dict(sn2=0.10))
 
 # prescribe policies to try
 policies = OrderedDict()
-policies['EI(0.0)'] = (pp.EI, dict(xi=0.0))
-policies['PI(0.1)'] = (pp.PI, dict(xi=0.1))
-policies['TS(100)'] = (pp.Thompson, dict(n=100))
+policies['EI(0.0)'] = (EI, dict(xi=0.0))
+policies['PI(0.1)'] = (PI, dict(xi=0.1))
+policies['TS(100)'] = (Thompson, dict(n=100))
 
 # run stack of experiments
 results = run_stack(problems, policies, niter, nreps, name=name)

@@ -3,7 +3,7 @@ Plotting functions for a stack of experiments.
 """
 
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('pdf')
 
 import numpy as np
 
@@ -41,5 +41,3 @@ def plot_stack(stack_results, problems=None, policies=None, name=''):
 
     ax.legend(loc=0, fontsize=16)
     fig.savefig(name)
-
-    return fig
