@@ -24,14 +24,11 @@ function.
 from .functions import *
 from .core import *
 
-from .functions import classics
-from .functions import custom
-from .functions import priors
+from . import functions
 from .core import runners
 from .core import plotters
 
 __all__ = []
-__all__ += classics.__all__
-__all__ += custom.__all__
+__all__ += functions.__all__
 __all__ += runners.__all__
 __all__ += plotters.__all__
