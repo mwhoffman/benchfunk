@@ -25,8 +25,10 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import numpy as np
+import os.path
 
 __all__ = ['LookupTable', 'LDA', 'SVM']
+
 
 class LookupTable(object):
     def __init__(self, filename, delimiter=','):
@@ -43,19 +45,24 @@ class LookupTable(object):
             key = tuple(row[:self.ndim])
             self._lookup[key] = row[self.ndim]
 
+        # expose the keys. I'm not necessarily sold on the name though...
+        self.X = np.array(self._lookup.keys())
+
     def __call__(self, x):
         x = tuple(x)
-        try:
-            return self._lookup.get(x)
-        except KeyError:
+        if x in self._lookup:
+            return self._lookup[x]
+        else:
             raise KeyError('no table entry for input x = {}'.format(x))
 
 
 class LDA(LookupTable):
     def __init__(self):
-        super(LDA, self).__init__('lda.csv')
+        fname = os.path.join(os.path.dirname(__file__), 'data', 'lda.csv')
+        super(LDA, self).__init__(fname)
 
 
 class SVM(LookupTable):
     def __init__(self):
-        super(SVM, self).__init__('svm.csv')
+        fname = os.path.join(os.path.dirname(__file__), 'data', 'svm.csv')
+        super(SVM, self).__init__(fname)
