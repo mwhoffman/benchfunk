@@ -43,7 +43,9 @@ class LookupTable(object):
         # inputs and ndim'th column is the target
         for row in data:
             key = tuple(row[:self.ndim])
-            self._lookup[key] = row[self.ndim]
+            # FIXME: turn this into a maximization problem. I don't like this,
+            # but it simplifies things for the time being.
+            self._lookup[key] = -row[self.ndim]
 
         # expose the keys. I'm not necessarily sold on the name though...
         self.X = np.array(self._lookup.keys())
