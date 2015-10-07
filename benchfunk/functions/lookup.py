@@ -45,7 +45,7 @@ class LookupTable(object):
             key = tuple(row[:self.ndim])
             # FIXME: turn this into a maximization problem. I don't like this,
             # but it simplifies things for the time being.
-            self._lookup[key] = -row[self.ndim]
+            self._lookup[key] = row[self.ndim]
 
         # expose the keys. I'm not necessarily sold on the name though...
         self.X = np.array(self._lookup.keys())
@@ -53,7 +53,7 @@ class LookupTable(object):
     def __call__(self, x):
         x = tuple(x)
         if x in self._lookup:
-            return self._lookup[x]
+            return -self._lookup[x]
         else:
             raise KeyError('no table entry for input x = {}'.format(x))
 
