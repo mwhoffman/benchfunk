@@ -59,12 +59,12 @@ class LookupTable(object):
 
 
 class LDA(LookupTable):
-    def __init__(self):
+    def __init__(self, rng=None):
         fname = os.path.join(os.path.dirname(__file__), 'data', 'lda.csv')
         super(LDA, self).__init__(fname)
 
 
 class SVM(LookupTable):
-    def __init__(self):
+    def __init__(self, rng=None):
         fname = os.path.join(os.path.dirname(__file__), 'data', 'svm.csv')
         super(SVM, self).__init__(fname)
