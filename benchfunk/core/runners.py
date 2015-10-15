@@ -1,64 +1,87 @@
 """
-Methods used to construct a jugfile for running benchmarks.
+Example script which runs a number of policies on a single problem with varying
+levels of observation noise.
 """
 
 from jug import TaskGenerator
 from jug.compound import CompoundTaskGenerator
 
 from pybo import solve_bayesopt
+from pybo.domains import Discrete, Box
 
 __all__ = ['run_instance', 'run_experiment', 'run_stack']
 
 
 @TaskGenerator
-def run_instance(problem, policy, niter, seed):
+def run_instance(problem, model, policy, niter, seed):
     """
-    Default runner for a single instance (ie problem/policy pair).
+    Default runner for a single instance (ie problem/policy pair). With the
+    exception of the `seed` keyword, all other arguments passed to
+    run_instance() can be user-defined as long as the same interface (keywords)
+    is used at runtime. In other words, each element of the dictionary that
+    is passed to run_experiment() should itself be a dictionary with all the
+    keywords in run_instance().
+
     """
-    # instantiate a problem and its bounds
-    func = problem[0](rng=seed, **problem[1])
-    bounds = func.bounds
+    # instantiate the problem
+    func, kwargs = problem
+    func = func(rng=seed, **kwargs)
 
-    _, _, info = solve_bayesopt(func, bounds,
-                                niter=niter, policy=policy,
-                                recommender='incumbent')
+    # get the function's bounds/domain
+    if hasattr(func, 'bounds'):
+        domain = Box(func.bounds)
+    else:
+        domain = Discrete(func.X)
 
+    # solve the problem using the prescribed model and policy
+    _, _, info = solve_bayesopt(func,
+                                domain,
+                                niter=niter,
+                                model=model,
+                                policy=policy)
+
+    # obtain the results
     xbest = info.xbest
     fbest = func.get_f(xbest)
 
-    return xbest, fbest
+    return fbest
 
 
 @CompoundTaskGenerator
-def run_experiment(problem, policies, niter, nreps, script=None, name=''):
+def run_experiment(name, experiment, eparams, nreps=1):
     """
-    Default runner for a single experiment.
+    Run `experiment()`, repeated `nreps` times, on each set of kwargs in
+    `eparams`.
+
+    Parameters:
+        name: str, label associated with this set of experiments.
+        experiment: function, function to run on each value of eparams.
+        eparams: dict, named list (dict) of experimental parameters (dicts) to
+            be passed to experiment() function.
+        nrep: int, number of repetitions of each instance to run, default 1.
+
+    Returns:
+        results: dict, dictionary of jug tasks.
     """
-    data = dict()
-    script = run_instance if script is None else script
+    results = dict()
 
-    for key, policy in policies.items():
-        namekey = '.'.join([name, key])
+    for task, kwargs in eparams.items():
+        # create the subtasks
+        results[task] = [experiment(seed=seed, **kwargs)
+                         for seed in xrange(nreps)]
 
-        data[key] = [script(problem, policy, niter, seed)
-                     for seed in xrange(nreps)]
+        # rename the subtasks so they are easily viewable
+        for t in results[task]:
+            t.name = ':'.join([name, task])
 
-        for t in data[key]:
-            t.name = namekey
-
-    return data
+    return results
 
 
-@CompoundTaskGenerator
-def run_stack(problems, policies, niter, nreps, script=None, name=''):
-    """
-    Run a stack of problem instances.
-    """
-    data = dict()
-    for key, problem in problems.items():
-        namekey = '.'.join([name, key])
-        data[key] = run_experiment(problem, policies, niter, nreps, script,
-                                   namekey)
-        data[key].name = namekey
+def run_stack(stack, nreps=1):
+    results = dict()
 
-    return data
+    for name, eparams in stack.items():
+        results[name] = run_experiment(name, eparams, nreps)
+        results[name].name = name
+
+    return results
