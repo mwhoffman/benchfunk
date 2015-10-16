@@ -2,42 +2,39 @@
 Plotting functions for a stack of experiments.
 """
 
-import matplotlib
-matplotlib.use('pdf')
-
 import numpy as np
+import os
 
 from ezplot import figure
-from jug import TaskGenerator
+from .io import dump
 
 __all__ = ['plot_stack']
 
 
-@TaskGenerator
-def plot_stack(stack_results, problems=None, policies=None, name=''):
+def plot_stack(stack):
     """
-    Plot a single stack of experiments.
+    Plot a stack of experiments.
+
+    Parameters:
+        stack: dict or str, either the dictionary of results obtained from
+            dumping or a string representing the path to the execution script.
     """
-    problems = problems if problems is not None else stack_results.key()
-    nfigs = len(problems)
 
-    fig = figure(figsize=(5*nfigs, 4))
+    if isinstance(stack, str):
+        stack = dump(stack)
 
-    for i, expt in enumerate(problems):
-        results = stack_results[expt]
-        policies = policies if policies is not None else results.keys()
+    for name, experiment in stack.items():
 
-        ax = fig.add_subplot(1, nfigs, i+1)
+        fig = figure(figsize=(5, 4))
+        ax = fig.add_subplot(1, 1, 1)
 
-        for policy in policies:
-            _, fbest = zip(*results[policy])
-            iters = np.arange(np.shape(fbest)[1])
+        for key, results in experiment.items():
+            nreps, niter = np.shape(results)
 
-            mu = np.mean(fbest, axis=0)
-            std = np.std(fbest, axis=0) / np.sqrt(len(fbest))
-            ax.plot_banded(iters, mu, std, label=policy)
+            mu = np.mean(results, axis=0)
+            std = np.std(results, axis=0) / np.sqrt(nreps)
 
-        ax.set_title(expt, fontsize=16)
+            ax.plot_banded(range(1, niter+1), mu, std, label=key)
 
-    ax.legend(loc=0, fontsize=16)
-    fig.savefig(name)
+        ax.set_title(name, fontsize=14)
+        ax.legend(loc=0, fontsize=14)

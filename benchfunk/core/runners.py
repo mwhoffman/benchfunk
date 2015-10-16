@@ -3,8 +3,8 @@ Example script which runs a number of policies on a single problem with varying
 levels of observation noise.
 """
 
+from collections import OrderedDict
 from jug import TaskGenerator
-from jug.compound import CompoundTaskGenerator
 
 from pybo import solve_bayesopt
 from pybo.domains import Discrete, Box
@@ -38,7 +38,8 @@ def run_instance(problem, model, policy, niter, seed):
                                 domain,
                                 niter=niter,
                                 model=model,
-                                policy=policy)
+                                policy=policy,
+                                recommender='incumbent')
 
     # obtain the results
     xbest = info.xbest
@@ -47,7 +48,6 @@ def run_instance(problem, model, policy, niter, seed):
     return fbest
 
 
-@CompoundTaskGenerator
 def run_experiment(name, experiment, eparams, nreps=1):
     """
     Run `experiment()`, repeated `nreps` times, on each set of kwargs in
@@ -63,7 +63,7 @@ def run_experiment(name, experiment, eparams, nreps=1):
     Returns:
         results: dict, dictionary of jug tasks.
     """
-    results = dict()
+    results = OrderedDict()
 
     for task, kwargs in eparams.items():
         # create the subtasks
@@ -93,10 +93,9 @@ def run_stack(experiment, stack, nreps=1):
         results: dict, dictionary of dictionary of jug tasks, corresponding to
             a prescribed semantic grouping of experiments.
     """
-    results = dict()
+    results = OrderedDict()
 
     for name, eparams in stack.items():
         results[name] = run_experiment(name, experiment, eparams, nreps)
-        results[name].name = name
 
     return results

@@ -29,10 +29,7 @@ def dump(jugfile):
     for name, experiment in results.items():
         completed[name] = OrderedDict()
 
-        # get task dict, ignoring associated hash
-        tasks, _ = experiment.args
-
-        for key, task in tasks.items():
+        for key, task in experiment.items():
             completed[name][key] = []
 
             for run in task:
@@ -46,7 +43,7 @@ def dump(jugfile):
             if len(completed[name][key]) == 0:
                 completed[name].pop(key)
 
-        if len(completed[name]) == 0:
+        if not completed[name]:
             completed.pop(name)
 
     # if dictionary is not empty, dump to pickle file
