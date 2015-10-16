@@ -77,11 +77,26 @@ def run_experiment(name, experiment, eparams, nreps=1):
     return results
 
 
-def run_stack(stack, nreps=1):
+def run_stack(experiment, stack, nreps=1):
+    """
+    Runs `experiment()` on a stack of named experiments passed via the
+    dictionary stack. Each key should correspond to a meaningful grouping of
+    experiments.
+
+    Parameters:
+        experiment: function, function to run on each value of stack.
+        stack: dict, stack of parameters to pass to experiment(), grouped and
+            named in a dictionary.
+        nreps: int, number of repetitions of each instance to run, default 1.
+
+    Returns:
+        results: dict, dictionary of dictionary of jug tasks, corresponding to
+            a prescribed semantic grouping of experiments.
+    """
     results = dict()
 
     for name, eparams in stack.items():
-        results[name] = run_experiment(name, eparams, nreps)
+        results[name] = run_experiment(name, experiment, eparams, nreps)
         results[name].name = name
 
     return results
