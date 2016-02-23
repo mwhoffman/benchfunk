@@ -1,51 +1,11 @@
 """
-Example script which runs a number of policies on a single problem with varying
-levels of observation noise.
+Functions to facilitate running repeated experiments with random seeds for
+easily reproducible results.
 """
 
 from collections import OrderedDict
-from jug import TaskGenerator
 
-from pybo import solve_bayesopt
-from pybo.domains import Discrete, Box
-
-__all__ = ['run_instance', 'run_experiment', 'run_stack']
-
-
-@TaskGenerator
-def run_instance(problem, model, policy, niter, seed):
-    """
-    Default runner for a single instance (ie problem/policy pair). With the
-    exception of the `seed` keyword, all other arguments passed to
-    run_instance() can be user-defined as long as the same interface (keywords)
-    is used at runtime. In other words, each element of the dictionary that
-    is passed to run_experiment() should itself be a dictionary with all the
-    keywords in run_instance().
-
-    """
-    # instantiate the problem
-    func, kwargs = problem
-    func = func(rng=seed, **kwargs)
-
-    # get the function's bounds/domain
-    if hasattr(func, 'bounds'):
-        domain = Box(func.bounds)
-    else:
-        domain = Discrete(func.X)
-
-    # solve the problem using the prescribed model and policy
-    _, _, info = solve_bayesopt(func,
-                                domain,
-                                niter=niter,
-                                model=model,
-                                policy=policy,
-                                recommender='incumbent')
-
-    # obtain the results
-    xbest = info.xbest
-    fbest = func.get_f(xbest)
-
-    return fbest
+__all__ = ['run_experiment', 'run_stack']
 
 
 def run_experiment(name, experiment, eparams, nreps=1):
@@ -55,7 +15,8 @@ def run_experiment(name, experiment, eparams, nreps=1):
 
     Parameters:
         name: str, label associated with this set of experiments.
-        experiment: function, function to run on each value of eparams.
+        experiment: function, function to run on each value of eparams, must
+            have a 'seed' keyword argument.
         eparams: dict, named list (dict) of experimental parameters (dicts) to
             be passed to experiment() function.
         nrep: int, number of repetitions of each instance to run, default 1.

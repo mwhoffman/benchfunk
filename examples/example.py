@@ -1,57 +1,56 @@
+from benchfunk import functions
+from benchfunk.core import run_stack
 from collections import OrderedDict
 import itertools
-from benchfunk import functions
-from benchfunk.core import run_instance, run_stack
+import jug
+import numpy as np
 
-niter = 100
-nreps = 10
+nreps = 5
 
-# prescribe policies to try
-policies = [('EI', dict(xi=0.0)),
-            ('PI', dict(xi=0.1)),
-            ('PES', dict(opes=False)),
-            ('PES', dict(opes=True))]
+@jug.TaskGenerator
+def experiment(func, sn2, niter, seed):
+    """Example experiment. Testing the uniform random sampling strategy."""
 
-# prescribe models to try
-models = [None]
+    # setup objective
+    objective = func(sn2, rng=seed)
+    bounds = objective.bounds
 
-# prescribe functions to test on and experimental setups, in this case simply
-# noise levels
+    ndim = len(bounds)
+    xmin, xmax = bounds.T
+
+    # uniform random sampling strategy
+    rng = np.random.RandomState(seed)
+    X = xmin + (xmax - xmin) * rng.rand(niter, ndim)
+    y = np.full(niter, -np.inf)
+    xbest = np.empty_like(X)
+
+    for i in xrange(niter):
+        y[i] = objective(X[i])
+        xbest[i] = X[np.argmax(y)]
+
+    return xbest
+
+
+# prescribe functions and noise levels to test
 funcs = [functions.Gramacy,
-         functions.Branin,
-         functions.Goldstein,
-         functions.Bohachevsky,
-         functions.Hartmann3,
-         functions.Hartmann6]
+        functions.Branin]
+sn2s = [0.01, 0.1]
+niters = [20, 40, 80]
 
-setups = [dict(sn2=0.01),
-          dict(sn2=0.05),
-          dict(sn2=0.10)]
+# list all experiments
+experiments = itertools.product(funcs, sn2s, niters)
 
-problems = itertools.product(funcs, setups)
-
-# list all experiments and build stack
-experiments = itertools.product(problems, models, policies)
+# build stack of experiments
 stack = OrderedDict()
-
-for problem, model, policy in experiments:
-    name = format(problem[0](**problem[1]))
+for func, sn2, niter in experiments:
+    name = format(func(sn2))
     if name not in stack:
         stack[name] = OrderedDict()
 
-    # name the particular run, in this example the relevant quantities are
-    # the policy and the model
-    key = str(policy[0])
-    key += '-{0}'.format(str(model)) if model is not None else ''
+    key = str(niter)    # name the particular run
 
-    # the following kwargs must correspond to those required by the particular
-    # experiment to be run
-    stack[name][key] = dict(
-        problem=problem,
-        model=model,
-        policy=policy,
-        niter=niter,
-    )
+    # the following keys must correspond to the kwargs of experiment()
+    stack[name][key] = dict(func=func, sn2=sn2, niter=niter)
 
 # run stack of tasks
-results = run_stack(run_instance, stack, nreps)
+results = run_stack(experiment, stack, nreps)
