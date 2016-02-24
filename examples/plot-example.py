@@ -1,12 +1,11 @@
 import benchfunk
-import jug
-import imp
 import matplotlib.pyplot as plt
 import numpy as np
+from example import results
+import jug
 
 jug.set_jugdir('example.jugdata')
-source = imp.load_source('example.py', './example.py')
-results = source.results
+
 fig, axs = plt.subplots(1, len(results),
                         figsize=(5*len(results), 4),
                         sharex=True)
@@ -23,3 +22,5 @@ for ax, (name, res) in zip(axs, results.items()):
         ax.plot(ybest.mean(0), label=key)
 
     ax.set_title(name)
+
+plt.show()
