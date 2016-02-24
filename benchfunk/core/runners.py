@@ -1,64 +1,62 @@
 """
-Methods used to construct a jugfile for running benchmarks.
+Functions to facilitate running repeated experiments with random seeds for
+easily reproducible results.
 """
 
-from jug import TaskGenerator
-from jug.compound import CompoundTaskGenerator
+from collections import OrderedDict
 
-from pybo import solve_bayesopt
-
-__all__ = ['run_instance', 'run_experiment', 'run_stack']
+__all__ = ['run_experiment', 'run_stack']
 
 
-@TaskGenerator
-def run_instance(problem, policy, niter, seed):
+def run_experiment(name, experiment, eparams, nreps=1):
     """
-    Default runner for a single instance (ie problem/policy pair).
+    Run `experiment()`, repeated `nreps` times, on each set of kwargs in
+    `eparams`.
+
+    Parameters:
+        name: str, label associated with this set of experiments.
+        experiment: function, function to run on each value of eparams, must
+            have a 'seed' keyword argument.
+        eparams: dict, named list (dict) of experimental parameters (dicts) to
+            be passed to experiment() function.
+        nrep: int, number of repetitions of each instance to run, default 1.
+
+    Returns:
+        results: dict, dictionary of jug tasks.
     """
-    # instantiate a problem and its bounds
-    func = problem[0](rng=seed, **problem[1])
-    bounds = func.bounds
+    results = OrderedDict()
 
-    _, _, info = solve_bayesopt(func, bounds,
-                                niter=niter, policy=policy,
-                                recommender='incumbent')
+    for task, kwargs in eparams.items():
+        # create the subtasks
+        results[task] = [experiment(seed=seed, **kwargs)
+                         for seed in xrange(nreps)]
 
-    xbest = info.xbest
-    fbest = func.get_f(xbest)
+        # rename the subtasks so they are easily viewable
+        for t in results[task]:
+            t.name = ':'.join([name, task])
 
-    return xbest, fbest
+    return results
 
 
-@CompoundTaskGenerator
-def run_experiment(problem, policies, niter, nreps, script=None, name=''):
+def run_stack(experiment, stack, nreps=1):
     """
-    Default runner for a single experiment.
+    Runs `experiment()` on a stack of named experiments passed via the
+    dictionary stack. Each key should correspond to a meaningful grouping of
+    experiments.
+
+    Parameters:
+        experiment: function, function to run on each value of stack.
+        stack: dict, stack of parameters to pass to experiment(), grouped and
+            named in a dictionary.
+        nreps: int, number of repetitions of each instance to run, default 1.
+
+    Returns:
+        results: dict, dictionary of dictionary of jug tasks, corresponding to
+            a prescribed semantic grouping of experiments.
     """
-    data = dict()
-    script = run_instance if script is None else script
+    results = OrderedDict()
 
-    for key, policy in policies.items():
-        namekey = '.'.join([name, key])
+    for name, eparams in stack.items():
+        results[name] = run_experiment(name, experiment, eparams, nreps)
 
-        data[key] = [script(problem, policy, niter, seed)
-                     for seed in xrange(nreps)]
-
-        for t in data[key]:
-            t.name = namekey
-
-    return data
-
-
-@CompoundTaskGenerator
-def run_stack(problems, policies, niter, nreps, script=None, name=''):
-    """
-    Run a stack of problem instances.
-    """
-    data = dict()
-    for key, problem in problems.items():
-        namekey = '.'.join([name, key])
-        data[key] = run_experiment(problem, policies, niter, nreps, script,
-                                   namekey)
-        data[key].name = namekey
-
-    return data
+    return results
