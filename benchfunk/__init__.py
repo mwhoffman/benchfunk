@@ -26,9 +26,7 @@ from .core import *
 
 from . import functions
 from .core import runners
-from .core import plotters
 
 __all__ = []
 __all__ += functions.__all__
 __all__ += runners.__all__
-__all__ += plotters.__all__

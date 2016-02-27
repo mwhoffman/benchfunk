@@ -1,35 +1,56 @@
-"""
-Example script which runs a number of policies on a single problem with varying
-levels of observation noise.
-"""
-
+from benchfunk import functions
+from benchfunk.core import run_stack
 from collections import OrderedDict
-from benchfunk.core import run_stack, plot_stack
+import itertools
+import jug
+import numpy as np
 
-from pybo.policies import *
-from benchfunk.functions import *
+nreps = 5
 
-# parameters
-name = __name__
-niter = 10
-nreps = 3
+@jug.TaskGenerator
+def experiment(func, sn2, niter, seed):
+    """Example experiment. Testing the uniform random sampling strategy."""
 
-# prescribe problem instances
-problems = OrderedDict()
-problems['Gramacy(0.01)'] = (Gramacy, dict(sn2=0.01))
-problems['Gramacy(0.05)'] = (Gramacy, dict(sn2=0.05))
-problems['Gramacy(0.10)'] = (Gramacy, dict(sn2=0.10))
+    # setup objective
+    objective = func(sn2, rng=seed)
+    bounds = objective.bounds
 
-# prescribe policies to try
-policies = OrderedDict()
-policies['EI(0.0)'] = (EI, dict(xi=0.0))
-policies['PI(0.1)'] = (PI, dict(xi=0.1))
-policies['TS(100)'] = (Thompson, dict(n=100))
+    ndim = len(bounds)
+    xmin, xmax = bounds.T
 
-# run stack of experiments
-results = run_stack(problems, policies, niter, nreps, name=name)
-results.name = name
+    # uniform random sampling strategy
+    rng = np.random.RandomState(seed)
+    X = xmin + (xmax - xmin) * rng.rand(niter, ndim)
+    y = np.full(niter, -np.inf)
+    xbest = np.empty_like(X)
 
-# plot results
-fig = plot_stack(results, problems.keys(), policies.keys(), name=name)
-fig.name = '.'.join([name, 'plot'])
+    for i in xrange(niter):
+        y[i] = objective(X[i])
+        xbest[i] = X[np.argmax(y)]
+
+    return xbest
+
+
+# prescribe functions and noise levels to test
+funcs = [functions.Gramacy,
+        functions.Branin]
+sn2s = [0.01, 0.1]
+niters = [20, 40, 80]
+
+# list all experiments
+experiments = itertools.product(funcs, sn2s, niters)
+
+# build stack of experiments
+stack = OrderedDict()
+for func, sn2, niter in experiments:
+    name = format(func(sn2))
+    if name not in stack:
+        stack[name] = OrderedDict()
+
+    key = str(niter)    # name the particular run
+
+    # the following keys must correspond to the kwargs of experiment()
+    stack[name][key] = dict(func=func, sn2=sn2, niter=niter)
+
+# run stack of tasks
+results = run_stack(experiment, stack, nreps)
